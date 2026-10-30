@@ -1,0 +1,1340 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Corredor Logística</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Transporte rodoviário, armazenagem e distribuição no Sul e Sudeste.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap">
+<style>
+/* Layout: túnel de luz em tela larga no topo; abaixo, faixas horizontais alternando branco e névoa, conteúdo alinhado à esquerda numa grade de 12 colunas. */
+:root {
+  --branco: #FFFFFF;
+  --nevoa: #ECF0F4;          /* cinza-azulado claro, fundo das faixas alternadas */
+  --linha: #D3DAE1;          /* divisores e bordas */
+  --cinza: #5A6672;          /* texto secundário */
+  --grafite: #18232E;        /* texto principal */
+  --azul-metal: #2E5B80;     /* acento principal */
+  --azul-metal-2: #4C7CA3;
+  --aco: #9DB2C6;            /* aço claro */
+  --superficie: #FFFFFF;
+  --campo: #FFFFFF;
+  --ok: #2F7A5B;
+  --erro: #B23A3A;
+
+  /* Faixas escuras (topo e rastreamento) são escuras nos dois temas */
+  --tunel: #0B1622;
+  --tunel-2: #13212F;
+  --tunel-texto: #E7EDF3;
+  --tunel-sub: #A7B6C4;
+  --tunel-linha: #26384A;
+
+  --metal: linear-gradient(100deg, #FFFFFF 0%, #CCD8E3 28%, #7F9DB8 52%, #E6EDF4 72%, #A9BED1 100%);
+  --metal-botao: linear-gradient(180deg, #5B89B0 0%, #2E5B80 55%, #244A69 100%);
+
+  --fonte: "Archivo", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --suave: cubic-bezier(.16, 1, .3, 1);
+  --mola: cubic-bezier(.34, 1.56, .64, 1);
+  --gutter: max(clamp(16px, 4vw, 40px), env(safe-area-inset-left, 0px));
+  --gutter-r: max(clamp(16px, 4vw, 40px), env(safe-area-inset-right, 0px));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --branco: #0F1821; --nevoa: #15212C; --linha: #2A3A49; --cinza: #9DAAB7; --grafite: #E6ECF2;
+    --azul-metal: #86AACB; --azul-metal-2: #A9C3DB; --aco: #5F7A93; --superficie: #15212C; --campo: #0F1821;
+    --ok: #6CC29C; --erro: #E58A8A; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --branco: #0F1821; --nevoa: #15212C; --linha: #2A3A49; --cinza: #9DAAB7; --grafite: #E6ECF2;
+  --azul-metal: #86AACB; --azul-metal-2: #A9C3DB; --aco: #5F7A93; --superficie: #15212C; --campo: #0F1821;
+  --ok: #6CC29C; --erro: #E58A8A; color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--branco); color: var(--grafite);
+  font-family: var(--fonte); font-size: 1.0625rem; line-height: 1.6;
+  font-stretch: 100%; -webkit-font-smoothing: antialiased; overflow-x: hidden;
+}
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--azul-metal-2); outline-offset: 3px; border-radius: 2px; }
+
+.wrap {
+  width: 100%; max-width: 1240px; margin-inline: auto;
+  padding-left: var(--gutter); padding-right: var(--gutter-r);
+}
+.faixa { padding-block: clamp(72px, 10vw, 128px); }
+.faixa--nevoa { background: var(--nevoa); }
+
+.titulo-secao {
+  font-size: clamp(2rem, 3.8vw, 3.1rem); font-weight: 720; font-stretch: 116%;
+  line-height: 1.04; letter-spacing: -0.012em;
+}
+.lead { color: var(--cinza); font-size: 1.125rem; max-width: 52ch; }
+
+/* ---------- Botões ---------- */
+.btn {
+  position: relative; overflow: hidden; isolation: isolate;
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  min-height: 48px; padding: 0 1.4rem; border-radius: 3px; border: 1px solid transparent;
+  font: 600 1rem/1 var(--fonte); font-stretch: 108%; text-decoration: none; cursor: pointer;
+  transition: transform .4s var(--mola), box-shadow .4s ease, filter .25s ease, border-color .3s ease, color .3s ease;
+}
+.btn:hover { transform: translateY(-3px); }
+.btn:active { transform: translateY(0) scale(.96); transition-duration: .12s; }
+.btn--metal {
+  background: var(--metal-botao); color: #FFFFFF; border-color: #1E3F5A;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 6px 14px -10px rgba(20,45,66,.9);
+}
+.btn--metal:hover {
+  filter: brightness(1.07);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.36), 0 16px 30px -12px rgba(46,91,128,.85), 0 0 0 4px rgba(91,137,176,.16);
+}
+/* brilho metálico que atravessa o botão */
+.btn--metal::before {
+  content: ""; position: absolute; inset: -1px; z-index: -1; pointer-events: none;
+  background: linear-gradient(105deg, transparent 32%, rgba(255,255,255,.55) 50%, transparent 68%);
+  transform: translateX(-110%); transition: transform .9s var(--suave);
+}
+.btn--metal:hover::before { transform: translateX(110%); }
+.heroi .acoes .btn--metal::before { animation: brilho 5s ease-in-out 2.6s infinite; }
+@keyframes brilho { 0%, 72% { transform: translateX(-110%); } 100% { transform: translateX(110%); } }
+.btn--linha { background: transparent; color: var(--tunel-texto); border-color: rgba(231,237,243,.38); }
+/* preenchimento em azul metálico que entra da esquerda */
+.btn--linha::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: var(--metal-botao); transform: scaleX(0); transform-origin: left; transition: transform .55s var(--suave);
+}
+.btn--linha:hover { border-color: #5B89B0; color: #FFFFFF; box-shadow: 0 16px 30px -14px rgba(46,91,128,.9); }
+.btn--linha:hover::before { transform: scaleX(1); }
+.onda {
+  position: absolute; z-index: -1; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 70%);
+  transform: scale(0); animation: onda .7s var(--suave) forwards;
+}
+@keyframes onda { to { transform: scale(1); opacity: 0; } }
+
+/* ---------- Cabeçalho ---------- */
+.topo { position: absolute; inset: 0 0 auto; z-index: 5; padding-top: env(safe-area-inset-top, 0px); }
+.topo .wrap { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 84px; }
+.marca { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; color: var(--tunel-texto); }
+.marca svg { width: 34px; height: 34px; flex: none; }
+.marca span { font-weight: 760; font-stretch: 125%; font-size: 1.2rem; letter-spacing: .01em; }
+.nav { display: flex; align-items: center; gap: clamp(16px, 2.4vw, 34px); }
+.nav a { color: var(--tunel-sub); text-decoration: none; font-size: .95rem; font-weight: 500; }
+.nav a:hover { color: var(--tunel-texto); }
+.nav a:not(.btn), .rodape li a {
+  background: linear-gradient(currentColor, currentColor) no-repeat 0 100% / 0 1px;
+  padding-bottom: 2px; transition: background-size .4s var(--suave), color .3s ease;
+}
+.nav a:not(.btn):hover, .rodape li a:hover { background-size: 100% 1px; }
+.menu-btn { transition: background-color .3s ease, transform .4s var(--mola); }
+.menu-btn:hover { background: rgba(231,237,243,.08); }
+.menu-btn:active { transform: scale(.95); }
+.nav .btn { min-height: 40px; padding: 0 1rem; font-size: .92rem; color: #FFFFFF; }
+.menu-btn {
+  display: none; background: transparent; border: 1px solid rgba(231,237,243,.35); color: var(--tunel-texto);
+  font: 600 .95rem var(--fonte); padding: .55rem .9rem; border-radius: 3px; cursor: pointer;
+}
+
+/* ---------- Herói ---------- */
+.heroi {
+  position: relative; overflow: hidden; background: var(--tunel); color: var(--tunel-texto);
+  min-height: clamp(620px, 90vh, 880px); display: flex; align-items: flex-end;
+  background-image: radial-gradient(60% 70% at 72% 48%, #1A3044 0%, var(--tunel) 70%);
+}
+.tunel { position: absolute; inset: 0; }
+.tunel canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.heroi::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(11,22,34,.92) 0%, rgba(11,22,34,.62) 36%, rgba(11,22,34,0) 64%),
+    linear-gradient(0deg, var(--tunel) 0%, rgba(11,22,34,.85) 8%, rgba(11,22,34,0) 38%);
+}
+.heroi .wrap { position: relative; z-index: 2; padding-block: 140px clamp(48px, 7vw, 88px); pointer-events: none; }
+.heroi .wrap > * { pointer-events: auto; }
+.heroi h1 {
+  font-size: clamp(2.7rem, 6.6vw, 5.8rem); font-weight: 780; font-stretch: 122%;
+  line-height: .96; letter-spacing: -0.018em; max-width: 13ch;
+  background: var(--metal); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.heroi .sub { margin-top: 28px; max-width: 48ch; color: var(--tunel-sub); font-size: clamp(1.05rem, 1.4vw, 1.2rem); }
+.heroi .acoes { margin-top: 36px; display: flex; flex-wrap: wrap; gap: 12px; }
+.heroi .ficha {
+  margin-top: clamp(48px, 7vw, 84px); padding-top: 22px; border-top: 1px solid var(--tunel-linha);
+  display: grid; grid-template-columns: repeat(3, minmax(0, max-content)); gap: 12px clamp(28px, 5vw, 72px);
+  font-size: .95rem; color: var(--tunel-sub);
+}
+.heroi .ficha b { display: block; color: var(--tunel-texto); font-weight: 650; font-stretch: 110%; font-size: 1.05rem; }
+
+/* ---------- Serviços ---------- */
+.servicos-cab { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 32px 64px; align-items: end; }
+.servicos { margin-top: clamp(48px, 6vw, 72px); border-top: 1px solid var(--grafite); }
+.servico {
+  display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 5fr) minmax(0, 3fr);
+  gap: 16px 48px; padding-block: 34px; position: relative;
+}
+.servico::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--linha);
+  transform-origin: left; transition: transform 1.3s var(--suave); transition-delay: calc(var(--i, 0) * 120ms + 200ms);
+}
+.servico h3 { transition: transform .5s var(--suave), color .3s ease; }
+.servico:hover h3 { transform: translateX(6px); color: var(--azul-metal); }
+.servico h3 { font-size: clamp(1.35rem, 2vw, 1.7rem); font-weight: 700; font-stretch: 118%; line-height: 1.1; }
+.servico p { color: var(--cinza); max-width: 46ch; }
+.servico ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: .95rem; }
+.servico li { padding-left: 16px; position: relative; }
+.servico li::before { content: ""; position: absolute; left: 0; top: .72em; width: 7px; height: 2px; background: var(--azul-metal); }
+
+/* ---------- Como funciona ---------- */
+.etapas { margin-top: clamp(48px, 6vw, 72px); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; position: relative; }
+.etapas::before { content: ""; position: absolute; left: 0; right: 0; top: 23px; height: 2px; background: linear-gradient(90deg, var(--aco), var(--azul-metal), var(--aco)); }
+.etapa { position: relative; padding-right: 32px; }
+.etapa .n {
+  width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--metal-botao); color: #FFFFFF; font-weight: 700; font-stretch: 112%;
+  box-shadow: 0 0 0 6px var(--nevoa), inset 0 1px 0 rgba(255,255,255,.3); position: relative;
+  font-variant-numeric: tabular-nums;
+}
+.etapa h3 { margin-top: 28px; font-size: 1.3rem; font-weight: 700; font-stretch: 114%; }
+.etapa p { margin-top: 10px; color: var(--cinza); font-size: 1rem; }
+.etapa .prazo { margin-top: 14px; font-size: .9rem; color: var(--azul-metal); font-weight: 600; }
+
+/* ---------- Cobertura ---------- */
+.cobertura { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px 72px; align-items: start; }
+.numeros { margin-top: 40px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.numeros div { border-left: 2px solid var(--azul-metal); padding-left: 16px; }
+.numeros dt { font-size: clamp(1.6rem, 2.6vw, 2.2rem); font-weight: 720; font-stretch: 116%; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.numeros dd { margin: 4px 0 0; color: var(--cinza); font-size: .95rem; }
+.tabela-cx { margin-top: 48px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .98rem; min-width: 560px; }
+th { text-align: left; font-weight: 600; color: var(--cinza); font-size: .88rem; padding: 0 16px 12px 0; border-bottom: 1px solid var(--grafite); }
+td { padding: 16px 16px 16px 0; border-bottom: 1px solid var(--linha); vertical-align: top; }
+td:first-child { font-weight: 650; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tfoot td { border-bottom: 0; font-weight: 650; color: var(--grafite); }
+.mapa { background: var(--superficie); border: 1px solid var(--linha); border-radius: 4px; padding: 20px; position: sticky; top: 24px; }
+.mapa svg { display: block; width: 100%; height: auto; max-width: 100%; }
+.mapa figcaption { margin-top: 12px; font-size: .88rem; color: var(--cinza); }
+.mapa .rota { stroke: var(--aco); stroke-width: 2.5; fill: none; }
+.mapa .rota--tronco { stroke: var(--azul-metal); stroke-width: 4; }
+.mapa .no { fill: var(--superficie); stroke: var(--azul-metal); stroke-width: 3; }
+.mapa .no--sede { fill: var(--azul-metal); }
+.mapa text { fill: var(--grafite); font-family: var(--fonte); font-size: 14px; font-weight: 600; }
+.mapa text.uf { fill: var(--cinza); font-weight: 500; font-size: 12px; }
+
+/* ---------- Rastreamento ---------- */
+.rastreio { background: var(--tunel); color: var(--tunel-texto); }
+.rastreio .grade { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 48px 72px; align-items: start; }
+.rastreio .lead { color: var(--tunel-sub); }
+.form-rastreio { margin-top: 36px; display: flex; gap: 10px; flex-wrap: wrap; }
+.form-rastreio label { flex-basis: 100%; font-size: .92rem; color: var(--tunel-sub); }
+.form-rastreio input {
+  flex: 1 1 220px; min-width: 0; min-height: 52px; padding: 0 16px; border-radius: 3px;
+  background: var(--tunel-2); color: var(--tunel-texto); border: 1px solid var(--tunel-linha);
+  font: 600 1.1rem var(--fonte); font-stretch: 112%; letter-spacing: .06em; text-transform: uppercase;
+}
+.form-rastreio input::placeholder { color: #5F7489; letter-spacing: .04em; }
+.form-rastreio .btn { min-height: 52px; }
+.msg-rastreio { flex-basis: 100%; font-size: .92rem; min-height: 1.5em; color: #F0A3A3; }
+.painel {
+  background: var(--tunel-2); border: 1px solid var(--tunel-linha); border-radius: 4px;
+  padding: clamp(20px, 3vw, 32px);
+}
+.painel-cab { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 24px; padding-bottom: 20px; border-bottom: 1px solid var(--tunel-linha); }
+.painel-cab .codigo { font-weight: 700; font-stretch: 118%; font-size: 1.3rem; letter-spacing: .04em; }
+.painel-cab .exemplo { font-size: .85rem; color: #7F93A7; }
+.status { display: inline-flex; align-items: center; gap: 8px; margin-top: 18px; padding: 6px 12px; border-radius: 999px; background: rgba(134,170,203,.14); color: #CFE0EF; font-weight: 600; font-size: .92rem; }
+.status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #9CC6EA; box-shadow: 0 0 0 4px rgba(156,198,234,.18); }
+.previsao { margin-top: 10px; color: var(--tunel-sub); font-size: .95rem; }
+.linha-tempo { list-style: none; margin: 24px 0 0; padding: 0; }
+.linha-tempo li { display: grid; grid-template-columns: 92px 20px minmax(0, 1fr); gap: 0 14px; position: relative; padding-bottom: 18px; }
+.linha-tempo li:last-child { padding-bottom: 0; }
+.linha-tempo time { font-size: .88rem; color: #8195A9; font-variant-numeric: tabular-nums; text-align: right; padding-top: 1px; }
+.linha-tempo .ponto { position: relative; display: flex; justify-content: center; }
+.linha-tempo .ponto::before { content: ""; width: 10px; height: 10px; border-radius: 50%; margin-top: 7px; background: var(--tunel-2); border: 2px solid #5E7D99; position: relative; z-index: 1; }
+.linha-tempo li:not(:last-child) .ponto::after { content: ""; position: absolute; top: 18px; bottom: -18px; width: 2px; background: var(--tunel-linha); }
+.linha-tempo li.atual .ponto::before { background: #CFE0EF; border-color: #CFE0EF; box-shadow: 0 0 0 4px rgba(207,224,239,.16); }
+.linha-tempo .ev { font-size: 1rem; }
+.linha-tempo .ev small { display: block; color: var(--tunel-sub); font-size: .88rem; }
+.linha-tempo li.atual .ev { font-weight: 650; }
+
+/* ---------- Contato ---------- */
+.contato { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 48px 80px; align-items: start; }
+.canais { margin-top: 36px; display: grid; gap: 22px; }
+.canais dt { font-size: .9rem; color: var(--cinza); }
+.canais dd { margin: 2px 0 0; font-weight: 600; font-size: 1.05rem; }
+.form-cotacao { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 20px; }
+.campo { display: grid; gap: 6px; min-width: 0; }
+.campo--inteiro { grid-column: 1 / -1; }
+.campo label { font-size: .92rem; font-weight: 600; }
+.campo input, .campo select, .campo textarea {
+  width: 100%; min-height: 48px; padding: 10px 14px; border-radius: 3px;
+  border: 1px solid var(--linha); background: var(--campo); color: var(--grafite);
+  font: 400 1rem var(--fonte);
+}
+.campo textarea { min-height: 112px; resize: vertical; }
+.campo input:focus, .campo select:focus, .campo textarea:focus { outline: none; border-color: var(--azul-metal); box-shadow: 0 0 0 3px color-mix(in srgb, var(--azul-metal) 22%, transparent); }
+.campo .erro { color: var(--erro); font-size: .85rem; min-height: 0; }
+.campo [aria-invalid="true"] { border-color: var(--erro); }
+.form-rodape { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; margin-top: 4px; }
+.form-rodape small { color: var(--cinza); font-size: .88rem; max-width: 44ch; }
+.confirmacao { grid-column: 1 / -1; border: 1px solid var(--linha); border-left: 3px solid var(--ok); background: var(--nevoa); padding: 18px 20px; border-radius: 3px; }
+.confirmacao strong { display: block; font-stretch: 110%; }
+.confirmacao p { color: var(--cinza); font-size: .95rem; margin-top: 4px; }
+
+/* ---------- Rodapé ---------- */
+.rodape { background: var(--tunel); color: var(--tunel-sub); padding-block: 56px calc(40px + env(safe-area-inset-bottom, 0px)); font-size: .95rem; }
+.rodape .grade { display: grid; grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)); gap: 32px 48px; }
+.rodape h4 { margin: 0 0 12px; color: var(--tunel-texto); font-size: .95rem; font-weight: 650; font-stretch: 110%; }
+.rodape ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.rodape a { text-decoration: none; }
+.rodape a:hover { color: var(--tunel-texto); }
+.rodape .final { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--tunel-linha); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-size: .85rem; color: #72869A; }
+
+/* ---------- Faixa de transição ---------- */
+.ponte {
+  position: relative; height: clamp(240px, 27vw, 380px); overflow: hidden;
+  background: linear-gradient(180deg,
+    var(--tunel) 0%,
+    var(--tunel) 24%,
+    color-mix(in srgb, var(--azul-metal) 42%, var(--tunel)) 54%,
+    color-mix(in srgb, var(--aco) 38%, var(--branco)) 82%,
+    var(--branco) 100%);
+}
+.ponte canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+
+/* ---------- Ondas entre as demais seções ---------- */
+.onda-div { position: relative; height: clamp(96px, 10vw, 150px); overflow: hidden; margin-block: -1px; }
+.onda-div canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+
+/* ---------- Entrada do topo ---------- */
+@keyframes subir { from { opacity: 0; transform: translateY(28px); filter: blur(8px); } }
+.heroi h1 { animation: subir 1.2s var(--suave) .15s both; }
+.heroi .sub { animation: subir 1.2s var(--suave) .4s both; }
+.heroi .acoes { animation: subir 1.2s var(--suave) .55s both; }
+.heroi .ficha { animation: subir 1.2s var(--suave) .7s both; }
+.topo .wrap { animation: subir 1s var(--suave) both; }
+
+/* ---------- Transições por seção (ativadas ao rolar) ---------- */
+.rv {
+  transition: opacity 1s var(--suave), transform 1.1s var(--suave), filter 1s var(--suave), clip-path 1.2s var(--suave);
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+html.anim .rv:not(.visto) { opacity: 0; transform: translateY(36px); filter: blur(8px); }
+html.anim .rv--esq:not(.visto) { transform: translateX(-56px); }
+html.anim .rv--dir:not(.visto) { transform: translateX(56px); }
+html.anim .rv--pop:not(.visto) { transform: translateY(26px) scale(.9); }
+.rv--titulo { clip-path: inset(-30% -10% -30% -10%); }
+html.anim .rv--titulo:not(.visto) { opacity: 1; filter: none; transform: translateY(44px); clip-path: inset(-30% -10% 100% -10%); }
+.lead.rv { transition-delay: 180ms; }
+.etapa.rv { transition-delay: calc(var(--i, 0) * 260ms + 200ms); }
+
+/* serviços: linhas divisórias se desenham */
+html.anim .servico:not(.visto)::after { transform: scaleX(0); }
+
+/* como funciona: trilho se desenha e as etapas acendem em sequência */
+.etapas::before { transform-origin: left; transition: transform 1.6s var(--suave) .1s; }
+html.anim .etapas:not(.visto)::before { transform: scaleX(0); }
+.etapa .n { transition: transform .8s var(--mola), box-shadow .6s ease; transition-delay: calc(var(--i, 0) * 260ms + 380ms); }
+html.anim .etapa:not(.visto) .n { transform: scale(.3); }
+.etapa:hover .n { box-shadow: 0 0 0 6px var(--nevoa), 0 0 0 10px color-mix(in srgb, var(--azul-metal) 25%, transparent), inset 0 1px 0 rgba(255,255,255,.3); transition-delay: 0s; }
+
+/* cobertura: rotas do mapa se desenham */
+.mapa .rota { stroke-dasharray: 1; stroke-dashoffset: 0; transition: stroke-dashoffset 1.6s var(--suave) var(--d, 0s); }
+html.anim .mapa:not(.visto) .rota { stroke-dashoffset: 1; }
+.mapa .no { transform-box: fill-box; transform-origin: center; transition: transform .7s var(--mola) var(--d, 0s); }
+html.anim .mapa:not(.visto) .no { transform: scale(0); }
+.mapa text { transition: opacity .9s ease 1.3s; }
+html.anim .mapa:not(.visto) text { opacity: 0; }
+
+/* rastreamento: eventos entram em cascata */
+@keyframes cascata { from { opacity: 0; transform: translateX(-16px); } }
+.linha-tempo.anima li { animation: cascata .8s var(--suave) both; animation-delay: calc(var(--i, 0) * 120ms + 200ms); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 980px) {
+  .servicos-cab, .cobertura, .rastreio .grade, .contato { grid-template-columns: minmax(0, 1fr); }
+  .servico { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .servico h3 { grid-column: 1 / -1; }
+  .etapas { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 48px; }
+  .etapas::before { display: none; }
+  .mapa { position: static; max-width: 460px; }
+  .rodape .grade { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .menu-btn { display: inline-flex; }
+  .nav {
+    display: none; position: absolute; top: calc(76px + env(safe-area-inset-top, 0px)); left: var(--gutter); right: var(--gutter-r);
+    flex-direction: column; align-items: stretch; gap: 0; padding: 8px;
+    background: var(--tunel-2); border: 1px solid var(--tunel-linha); border-radius: 4px;
+  }
+  .nav.aberto { display: flex; }
+  .nav a { padding: 12px 10px; font-size: 1rem; }
+  .nav .btn { margin-top: 6px; min-height: 46px; }
+  .heroi .ficha { grid-template-columns: minmax(0, 1fr); }
+  .heroi::after { background: linear-gradient(0deg, rgba(11,22,34,.94) 0%, rgba(11,22,34,.55) 55%, rgba(11,22,34,.25) 100%); }
+  .servico { grid-template-columns: minmax(0, 1fr); padding-block: 28px; }
+  .numeros { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .form-cotacao { grid-template-columns: minmax(0, 1fr); }
+  .linha-tempo li { grid-template-columns: 70px 20px minmax(0, 1fr); gap: 0 10px; }
+}
+@media (max-width: 560px) {
+  .etapas { grid-template-columns: minmax(0, 1fr); }
+  .etapa { padding-right: 0; }
+  .rodape .grade { grid-template-columns: minmax(0, 1fr); }
+}
+</style>
+
+<header class="topo">
+  <div class="wrap">
+    <a class="marca" href="#inicio" aria-label="Corredor Logística, início">
+      <svg viewBox="0 0 40 40" aria-hidden="true">
+        <defs><linearGradient id="gm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".5" stop-color="#7F9DB8"/><stop offset="1" stop-color="#DCE6EF"/></linearGradient></defs>
+        <circle cx="20" cy="20" r="18" fill="none" stroke="url(#gm)" stroke-width="2.5"/>
+        <circle cx="22" cy="19" r="11" fill="none" stroke="url(#gm)" stroke-width="2.2" opacity=".85"/>
+        <circle cx="23.5" cy="18.5" r="5" fill="none" stroke="url(#gm)" stroke-width="2" opacity=".7"/>
+        <circle cx="24" cy="18.3" r="1.6" fill="#FFFFFF"/>
+      </svg>
+      <span>Corredor</span>
+    </a>
+    <button class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="nav">Menu</button>
+    <nav class="nav" id="nav" aria-label="Seções do site">
+      <a href="#servicos">Serviços</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#cobertura">Cobertura</a>
+      <a href="#rastreamento">Rastreamento</a>
+      <a class="btn btn--metal" href="#contato">Pedir cotação</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- Início -->
+  <section class="heroi" id="inicio" aria-labelledby="h-inicio">
+    <div class="tunel" id="tunel" aria-hidden="true"></div>
+    <div class="wrap">
+      <h1 id="h-inicio">Sua carga em movimento, do armazém à porta.</h1>
+      <p class="sub">Transporte rodoviário, armazenagem e distribuição para indústria e varejo no Sul e Sudeste, com rastreamento de cada volume do início ao fim.</p>
+      <div class="acoes">
+        <a class="btn btn--metal" href="#contato">Pedir cotação</a>
+        <a class="btn btn--linha" href="#rastreamento">Rastrear carga</a>
+      </div>
+      <div class="ficha">
+        <div><b>6 centros de distribuição</b>SP, RJ, MG, PR e RS</div>
+        <div><b>Operação 24 horas</b>Transferências noturnas entre CDs</div>
+        <div><b>Entrega D+1</b>Entre capitais do Sudeste</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Transição animada entre o início e os serviços -->
+  <div class="ponte" aria-hidden="true"><canvas id="ponte-canvas"></canvas></div>
+
+  <!-- Serviços -->
+  <section class="faixa" id="servicos" aria-labelledby="h-servicos">
+    <div class="wrap">
+      <div class="servicos-cab">
+        <h2 class="titulo-secao" id="h-servicos">Serviços para cada etapa da sua cadeia</h2>
+        <p class="lead">Contrate um serviço isolado ou a operação completa, da coleta na fábrica à entrega na loja ou no consumidor final.</p>
+      </div>
+      <div class="servicos">
+        <article class="servico">
+          <h3>Transporte rodoviário</h3>
+          <p>Cargas fechadas e fracionadas entre capitais e interior, com rotas fixas e saídas diárias dos nossos centros de distribuição.</p>
+          <ul><li>Veículos de 3,5 a 28 toneladas</li><li>Seguro RCTR-C e RCF-DC incluso</li><li>Escolta para cargas de alto valor</li></ul>
+        </article>
+        <article class="servico">
+          <h3>Armazenagem</h3>
+          <p>Recebimento, conferência, endereçamento e controle de estoque por sistema WMS, com inventário rotativo e relatórios diários.</p>
+          <ul><li>84.000 m² de área coberta</li><li>Áreas para cargas secas e paletizadas</li><li>Separação por pedido e por onda</li></ul>
+        </article>
+        <article class="servico">
+          <h3>Distribuição urbana</h3>
+          <p>Entregas fracionadas em grandes centros com janelas agendadas, veículos urbanos de carga e roteirização diária.</p>
+          <ul><li>Entrega D+1 nas capitais</li><li>Agendamento com o destinatário</li><li>Comprovante digital com foto</li></ul>
+        </article>
+        <article class="servico">
+          <h3>Logística reversa</h3>
+          <p>Coleta de devoluções, trocas e embalagens retornáveis, com triagem no CD e retorno ao estoque ou ao fornecedor.</p>
+          <ul><li>Coletas programadas</li><li>Triagem e reembalagem</li><li>Relatório de avarias</li></ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <div class="onda-div" data-de="--branco" data-para="--nevoa" style="background:var(--branco)" aria-hidden="true"><canvas></canvas></div>
+
+  <!-- Como funciona -->
+  <section class="faixa faixa--nevoa" id="como-funciona" aria-labelledby="h-como">
+    <div class="wrap">
+      <h2 class="titulo-secao" id="h-como">Como sua carga viaja com a gente</h2>
+      <ol class="etapas" role="list" style="list-style:none;margin-bottom:0;padding:0">
+        <li class="etapa">
+          <div class="n">1</div>
+          <h3>Coleta</h3>
+          <p>Agendamos a retirada no seu endereço e conferimos volumes e nota fiscal na hora.</p>
+          <p class="prazo">No mesmo dia, pedidos até 14h</p>
+        </li>
+        <li class="etapa">
+          <div class="n">2</div>
+          <h3>Triagem</h3>
+          <p>No centro de distribuição, cada volume recebe etiqueta, rota e posição no veículo.</p>
+          <p class="prazo">Até 6 horas após a chegada</p>
+        </li>
+        <li class="etapa">
+          <div class="n">3</div>
+          <h3>Transferência</h3>
+          <p>Viagens noturnas entre CDs, com monitoramento por satélite e alertas de desvio de rota.</p>
+          <p class="prazo">Saídas diárias às 22h</p>
+        </li>
+        <li class="etapa">
+          <div class="n">4</div>
+          <h3>Entrega</h3>
+          <p>O motorista registra foto e assinatura, e o comprovante aparece no rastreamento.</p>
+          <p class="prazo">Comprovante em tempo real</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <div class="onda-div" data-de="--nevoa" data-para="--branco" style="background:var(--nevoa)" aria-hidden="true"><canvas></canvas></div>
+
+  <!-- Cobertura -->
+  <section class="faixa" id="cobertura" aria-labelledby="h-cobertura">
+    <div class="wrap cobertura">
+      <div>
+        <h2 class="titulo-secao" id="h-cobertura">Seis centros de distribuição ligados por rotas diárias</h2>
+        <p class="lead" style="margin-top:20px">Nossa malha cobre os cinco estados com maior volume de cargas do país, a partir de CDs próximos às principais rodovias.</p>
+        <dl class="numeros">
+          <div><dt data-alvo="1940">1.940</dt><dd>municípios atendidos</dd></div>
+          <div><dt data-alvo="320">320</dt><dd>veículos de frota própria</dd></div>
+          <div><dt data-alvo="98.7" data-dec="1" data-suf="%">98,7%</dt><dd>entregas no prazo em 2025</dd></div>
+        </dl>
+        <div class="tabela-cx">
+          <table>
+            <thead><tr><th>Centro de distribuição</th><th>Região atendida</th><th class="num">Área</th></tr></thead>
+            <tbody>
+              <tr><td>Guarulhos, SP</td><td>Grande São Paulo e Vale do Paraíba</td><td class="num">22.000 m²</td></tr>
+              <tr><td>Campinas, SP</td><td>Interior paulista</td><td class="num">14.500 m²</td></tr>
+              <tr><td>Contagem, MG</td><td>Minas Gerais e Espírito Santo</td><td class="num">13.000 m²</td></tr>
+              <tr><td>São José dos Pinhais, PR</td><td>Paraná e Santa Catarina</td><td class="num">12.500 m²</td></tr>
+              <tr><td>Duque de Caxias, RJ</td><td>Estado do Rio de Janeiro</td><td class="num">12.000 m²</td></tr>
+              <tr><td>Canoas, RS</td><td>Rio Grande do Sul</td><td class="num">10.000 m²</td></tr>
+            </tbody>
+            <tfoot><tr><td>Total</td><td></td><td class="num">84.000 m²</td></tr></tfoot>
+          </table>
+        </div>
+      </div>
+      <figure class="mapa" style="margin:0">
+        <svg viewBox="0 0 400 450" role="img" aria-label="Esquema das rotas entre os seis centros de distribuição">
+          <path class="rota" pathLength="1" style="--d:.9s" d="M240 190 L120 170"/>
+          <path class="rota" pathLength="1" style="--d:1.1s" d="M240 70 L340 160"/>
+          <path class="rota" pathLength="1" style="--d:1.2s" d="M120 170 L160 300"/>
+          <path class="rota" pathLength="1" style="--d:1.25s" d="M160 300 L110 405"/>
+          <path class="rota rota--tronco" pathLength="1" style="--d:.45s" d="M240 190 L240 70"/>
+          <path class="rota rota--tronco" pathLength="1" style="--d:.45s" d="M240 190 L340 160"/>
+          <path class="rota rota--tronco" pathLength="1" style="--d:.45s" d="M240 190 L160 300"/>
+          <circle class="no" style="--d:1s" cx="240" cy="70" r="9"/>
+          <circle class="no" style="--d:1s" cx="340" cy="160" r="9"/>
+          <circle class="no no--sede" style="--d:.25s" cx="240" cy="190" r="11"/>
+          <circle class="no" style="--d:1.25s" cx="120" cy="170" r="9"/>
+          <circle class="no" style="--d:1.05s" cx="160" cy="300" r="9"/>
+          <circle class="no" style="--d:1.6s" cx="110" cy="405" r="9"/>
+          <text x="256" y="66">Contagem</text><text class="uf" x="256" y="82">MG</text>
+          <text x="340" y="188" text-anchor="middle">Duque de Caxias</text><text class="uf" x="340" y="204" text-anchor="middle">RJ</text>
+          <text x="252" y="228">Guarulhos</text><text class="uf" x="252" y="244">SP, sede</text>
+          <text x="104" y="160" text-anchor="end">Campinas</text><text class="uf" x="104" y="176" text-anchor="end">SP</text>
+          <text x="178" y="304">São José dos Pinhais</text><text class="uf" x="178" y="320">PR</text>
+          <text x="128" y="410">Canoas</text><text class="uf" x="128" y="426">RS</text>
+        </svg>
+        <figcaption>Linhas grossas: rotas-tronco com saída diária. Linhas finas: rotas regionais.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <div class="onda-div" data-de="--branco" data-para="--tunel" style="background:var(--branco)" aria-hidden="true"><canvas></canvas></div>
+
+  <!-- Rastreamento -->
+  <section class="faixa rastreio" id="rastreamento" aria-labelledby="h-rastreio">
+    <div class="wrap grade">
+      <div>
+        <h2 class="titulo-secao" id="h-rastreio">Rastreie sua carga</h2>
+        <p class="lead" style="margin-top:20px">Digite o código impresso na nota fiscal ou no comprovante de coleta. Ele tem três letras e oito números.</p>
+        <form class="form-rastreio" id="form-rastreio" novalidate>
+          <label for="codigo">Código de rastreamento</label>
+          <input id="codigo" name="codigo" autocomplete="off" placeholder="CRD 0000 0000" maxlength="16" aria-describedby="msg-rastreio">
+          <button class="btn btn--metal" type="submit">Rastrear</button>
+          <p class="msg-rastreio" id="msg-rastreio" role="status"></p>
+        </form>
+      </div>
+      <div class="painel" aria-live="polite">
+        <div class="painel-cab">
+          <span class="codigo" id="r-codigo">CRD 4821 0937</span>
+          <span class="exemplo" id="r-exemplo">Exemplo de rastreamento</span>
+        </div>
+        <span class="status" id="r-status">Em rota de entrega</span>
+        <p class="previsao" id="r-previsao"></p>
+        <ol class="linha-tempo" id="r-eventos"></ol>
+      </div>
+    </div>
+  </section>
+
+  <div class="onda-div" data-de="--tunel" data-para="--nevoa" style="background:var(--tunel)" aria-hidden="true"><canvas></canvas></div>
+
+  <!-- Contato -->
+  <section class="faixa faixa--nevoa" id="contato" aria-labelledby="h-contato">
+    <div class="wrap contato">
+      <div>
+        <h2 class="titulo-secao" id="h-contato">Peça uma cotação</h2>
+        <p class="lead" style="margin-top:20px">Conte o que precisa transportar ou armazenar. Um consultor responde em até 1 dia útil.</p>
+        <dl class="canais">
+          <div><dt>Central de atendimento</dt><dd>(11) 4000-0000</dd></div>
+          <div><dt>E-mail comercial</dt><dd>comercial@corredorlogistica.com.br</dd></div>
+          <div><dt>Sede</dt><dd>Rod. Presidente Dutra, km 225<br>Guarulhos, SP</dd></div>
+          <div><dt>Horário</dt><dd>Segunda a sábado, 7h às 20h</dd></div>
+        </dl>
+      </div>
+      <form class="form-cotacao" id="form-cotacao" novalidate>
+        <div class="campo"><label for="c-nome">Nome</label><input id="c-nome" name="nome" autocomplete="name" required><span class="erro" id="e-nome"></span></div>
+        <div class="campo"><label for="c-empresa">Empresa</label><input id="c-empresa" name="empresa" autocomplete="organization"></div>
+        <div class="campo"><label for="c-email">E-mail</label><input id="c-email" name="email" type="email" autocomplete="email" required><span class="erro" id="e-email"></span></div>
+        <div class="campo"><label for="c-tel">Telefone</label><input id="c-tel" name="telefone" type="tel" autocomplete="tel"></div>
+        <div class="campo"><label for="c-origem">Origem</label><input id="c-origem" name="origem" placeholder="Cidade ou CEP" required><span class="erro" id="e-origem"></span></div>
+        <div class="campo"><label for="c-destino">Destino</label><input id="c-destino" name="destino" placeholder="Cidade ou CEP" required><span class="erro" id="e-destino"></span></div>
+        <div class="campo">
+          <label for="c-servico">Serviço</label>
+          <select id="c-servico" name="servico">
+            <option>Transporte rodoviário</option>
+            <option>Armazenagem</option>
+            <option>Distribuição urbana</option>
+            <option>Logística reversa</option>
+            <option>Operação completa</option>
+          </select>
+        </div>
+        <div class="campo"><label for="c-peso">Peso aproximado (kg)</label><input id="c-peso" name="peso" inputmode="numeric" placeholder="Ex.: 1.200"></div>
+        <div class="campo campo--inteiro"><label for="c-msg">Detalhes da carga</label><textarea id="c-msg" name="mensagem" placeholder="Tipo de mercadoria, volumes, frequência dos envios"></textarea></div>
+        <div class="form-rodape">
+          <button class="btn btn--metal" type="submit">Pedir cotação</button>
+          <small>Usamos seus dados apenas para responder a esta cotação.</small>
+        </div>
+        <div class="confirmacao" id="confirmacao" hidden tabindex="-1">
+          <strong>Pedido de cotação preenchido</strong>
+          <p id="conf-texto"></p>
+        </div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<div class="onda-div" data-de="--nevoa" data-para="--tunel" style="background:var(--nevoa)" aria-hidden="true"><canvas></canvas></div>
+
+<footer class="rodape">
+  <div class="wrap">
+    <div class="grade">
+      <div>
+        <a class="marca" href="#inicio" aria-label="Corredor Logística, início" style="color:var(--tunel-texto)">
+          <svg viewBox="0 0 40 40" aria-hidden="true" width="30" height="30"><circle cx="20" cy="20" r="18" fill="none" stroke="#9DB2C6" stroke-width="2.5"/><circle cx="22" cy="19" r="11" fill="none" stroke="#9DB2C6" stroke-width="2.2" opacity=".8"/><circle cx="23.5" cy="18.5" r="5" fill="none" stroke="#9DB2C6" stroke-width="2" opacity=".6"/></svg>
+          <span>Corredor</span>
+        </a>
+        <p style="margin-top:14px;max-width:34ch">Transporte, armazenagem e distribuição no Sul e Sudeste.</p>
+      </div>
+      <div><h4>Serviços</h4><ul><li><a href="#servicos">Transporte rodoviário</a></li><li><a href="#servicos">Armazenagem</a></li><li><a href="#servicos">Distribuição urbana</a></li><li><a href="#servicos">Logística reversa</a></li></ul></div>
+      <div><h4>Empresa</h4><ul><li><a href="#como-funciona">Como funciona</a></li><li><a href="#cobertura">Cobertura</a></li><li><a href="#rastreamento">Rastreamento</a></li></ul></div>
+      <div><h4>Contato</h4><ul><li>(11) 4000-0000</li><li>comercial@corredorlogistica.com.br</li><li>Guarulhos, SP</li></ul></div>
+    </div>
+    <div class="final"><span>© <span id="ano">2026</span> Corredor Logística</span><span>Todos os direitos reservados</span></div>
+  </div>
+</footer>
+
+<script>
+/* ===== LightTunnel (React Bits) adaptado para JavaScript puro ===== */
+(function () {
+  const INTRO_SECONDS = 1.8;
+  const VERTEX = `#version 300 es
+in vec2 aPosition;
+void main() { gl_Position = vec4(aPosition, 0.0, 1.0); }`;
+  const FRAGMENT = `#version 300 es
+precision highp float;
+uniform vec2 uResolution; uniform vec2 uCenter; uniform float uScale; uniform float uRatio; uniform float uTime;
+uniform float uDrift; uniform vec2 uSteer; uniform float uBend; uniform float uCount; uniform float uSwing; uniform float uWave;
+uniform float uWidth; uniform float uPulseWidth; uniform float uHead; uniform float uTail; uniform float uChance; uniform float uSpacing;
+uniform float uPulseSpeed; uniform float uFlow; uniform float uHalo; uniform float uGlow; uniform float uBrightness; uniform float uVariance;
+uniform float uBody; uniform float uFadeNear; uniform float uFadeFar; uniform vec3 uCable; uniform vec3 uPulse; uniform vec3 uTunnel;
+uniform vec3 uSurge; uniform float uReveal; uniform float uGrain; uniform float uSeed; uniform float uLight; uniform float uOpacity;
+out vec4 outColor;
+const float TAU = 6.2831853;
+vec3 inkOf(vec3 color, float depthOfInk) {
+  float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
+  float peak = max(color.r, max(color.g, color.b));
+  float chroma = (peak - min(color.r, min(color.g, color.b))) / max(peak, 0.001);
+  return color * min(1.0, mix(depthOfInk, depthOfInk * 1.7, chroma) / max(luma, 0.001));
+}
+float hash(float n) { return fract(sin(n * 127.1 + uSeed * 311.7) * 43758.5453); }
+vec2 bendAt(float depth) {
+  float reach = 1.0 - exp(-max(depth, 0.0) * 0.55);
+  vec2 wobble = vec2(sin(uDrift * 0.37 + depth * 0.31), cos(uDrift * 0.29 + depth * 0.23)) * uBend;
+  return (wobble + uSteer) * reach;
+}
+void main() {
+  vec2 p = (gl_FragCoord.xy - 0.5 * uResolution - uCenter) / uScale;
+  float depth = -log(max(length(p), 1e-5));
+  vec2 q = p;
+  for (int i = 0; i < 4; i++) { q = p - bendAt(depth); depth = -log(max(length(q), 1e-5)); }
+  float r = length(q);
+  float px = r * uScale;
+  float turn = atan(q.y, q.x) / TAU;
+  float s = turn - uSwing - uWave * sin(depth * 1.2 + uDrift * 0.5);
+  float cell = floor(s * uCount);
+  float spacing = TAU * px / uCount;
+  float near = smoothstep(0.55, 1.25, r);
+  float width = uWidth * (1.0 + near * 1.2);
+  float soft = uRatio * (0.55 + near * 0.9);
+  float tight = uRatio * uHalo * (1.0 + near);
+  float wide = tight * 4.5;
+  float lines = 0.0; float body = 0.0; vec3 glow = vec3(0.0); float strokes = 0.0;
+  for (int k = -3; k <= 3; k++) {
+    float i = cell + float(k);
+    float id = mod(i, uCount);
+    float h1 = hash(id); float h2 = hash(id + 17.0); float h3 = hash(id + 41.0); float h4 = hash(id + 73.0);
+    float center = (i + 0.5 + (h1 - 0.5) * 0.55) / uCount;
+    center += 0.12 * sin(depth * (0.8 + h2 * 0.9) + uDrift * (0.4 + h3 * 0.5) + h4 * TAU) / uCount;
+    float d = abs(s - center) * TAU * px;
+    float shade = 1.0 + uVariance * (h3 - 0.5) * 0.9;
+    float reach = smoothstep(spacing * 2.4, spacing * 1.4, d);
+    lines += smoothstep(width + soft, width - soft, d) * shade;
+    body += exp(-d / max(spacing * 0.22, 0.001)) * shade * reach;
+    float x = depth * uSpacing + uTime * uPulseSpeed * (0.55 + h2 * 0.6) * uFlow + h4 * 7.0;
+    float lead = (fract(x) - 0.5) / uSpacing * uFlow;
+    float lit = step(hash(id * 3.7 + floor(x) * 13.1), uChance);
+    float limit = 0.5 / uSpacing;
+    float head = exp(-pow(max(-lead, 0.0) / uHead, 2.0)) * smoothstep(-limit, -limit * 0.8, lead);
+    float tail = exp(-max(lead, 0.0) / uTail) * smoothstep(limit, limit * 0.55, lead);
+    float pulse = (lead < 0.0 ? head : tail) * lit;
+    float ring = uSurge.y * exp(-pow((depth - uSurge.x) / uSurge.z, 2.0));
+    pulse = max(pulse, ring);
+    float hot = pulse * (lead < 0.0 ? 1.0 : exp(-max(lead, 0.0) / (uTail * 0.35)));
+    float core = uPulseWidth * width + 0.35 * uRatio;
+    float stroke = smoothstep(core + soft, core - soft, d);
+    float bloom = (exp(-d / tight) * 0.7 + exp(-d / wide) * 0.18) * uGlow * reach;
+    vec3 tint = mix(uPulse, vec3(1.0), hot * 0.55 * (1.0 - uLight));
+    glow += tint * pulse * (stroke * 1.5 + bloom) * shade;
+    strokes += pulse * stroke * shade;
+  }
+  float lod = smoothstep(4.0, 1.2, spacing);
+  float average = min(2.0 * uWidth / max(spacing, 0.001), 1.0);
+  lines = mix(lines, average, lod);
+  glow = mix(glow, uPulse * average * 0.6 * uChance, lod);
+  strokes = mix(strokes, average * 0.6 * uChance, lod);
+  body = mix(body, 1.0, lod) * uBody;
+  float rr = r * 0.25;
+  float fade = smoothstep(0.0, uFadeNear, rr) * smoothstep(uFadeFar, uFadeFar * 0.55, rr);
+  fade *= smoothstep(uReveal - 0.6, uReveal, depth);
+  float grain = 1.0;
+  if (uGrain > 0.0) { grain += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)) + uTime * 7.0) * 43758.5453) - 0.5) * uGrain * 4.0; }
+  if (uLight > 0.5) {
+    float hairline = clamp(lines * 0.26 + body * 0.2, 0.0, 1.0);
+    float stroke = clamp(strokes * 1.6, 0.0, 1.0);
+    float haze = clamp(length(glow) * 0.12, 0.0, 0.25);
+    float ink = clamp(hairline + stroke + haze, 0.0, 1.0) * fade * uOpacity * grain;
+    vec3 tone = mix(inkOf(uCable, 0.3), inkOf(uPulse, 0.16), clamp(stroke + haze * 2.0, 0.0, 1.0));
+    tone = mix(tone, inkOf(uTunnel, 0.3), clamp(body * uBody, 0.0, 1.0) * 0.5);
+    outColor = vec4(tone * ink, ink);
+    return;
+  }
+  vec3 light = (uCable * lines * 0.12 + uTunnel * body * 0.35 + glow) * uBrightness * fade * grain;
+  vec3 mapped = (1.0 - exp(-light * 1.4)) * uOpacity;
+  outColor = vec4(mapped, max(mapped.r, max(mapped.g, mapped.b)));
+}`;
+
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const compile = (gl, type, src) => {
+    const sh = gl.createShader(type); if (!sh) return null;
+    gl.shaderSource(sh, src); gl.compileShader(sh);
+    if (gl.getShaderParameter(sh, gl.COMPILE_STATUS)) return sh;
+    gl.deleteShader(sh); return null;
+  };
+  const link = gl => {
+    const v = compile(gl, gl.VERTEX_SHADER, VERTEX), f = compile(gl, gl.FRAGMENT_SHADER, FRAGMENT), p = gl.createProgram();
+    if (!v || !f || !p) return null;
+    gl.attachShader(p, v); gl.attachShader(p, f); gl.bindAttribLocation(p, 0, 'aPosition'); gl.linkProgram(p);
+    gl.deleteShader(v); gl.deleteShader(f);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) { gl.deleteProgram(p); return null; }
+    const uniforms = {}; const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+    for (let i = 0; i < n; i++) { const info = gl.getActiveUniform(p, i); if (info) uniforms[info.name] = gl.getUniformLocation(p, info.name); }
+    return { program: p, uniforms };
+  };
+
+  const DEFAULTS = {
+    cableColor: '#ffffff', pulseColor: '#ffffff', tunnelColor: '#ffffff', tunnelOpacity: 0, speed: 0.1,
+    flowDirection: 'inward', pulseSpeed: 2, pulseLength: 0.28, pulseBlend: 0.6, pulseWidth: 1, pulseDensity: 0.5,
+    cableCount: 56, thickness: 0.35, rimWidth: 0.15, waviness: 0.3, sway: 0.5, bend: 0.4, size: 1, centerX: 0, centerY: 0,
+    glow: 1, fadeNear: 0.5, fadeFar: 2, brightness: 1, colorVariance: true, grain: false, grainIntensity: 0.05, opacity: 1,
+    mouseInteraction: true, mouseStrength: 0.1, clickSurge: true, intro: true, variation: 0, lightMode: false, dpr: undefined
+  };
+
+  function normalize(o) {
+    return Object.assign({}, o, {
+      tunnelOpacity: clamp(o.tunnelOpacity, 0, 1), speed: Math.max(0, o.speed), flow: o.flowDirection === 'outward' ? 1 : -1,
+      pulseSpeed: Math.max(0, o.pulseSpeed), pulseLength: clamp(o.pulseLength, 0.02, 1), pulseBlend: clamp(o.pulseBlend, 0, 1),
+      pulseWidth: clamp(o.pulseWidth, 0.1, 3), pulseDensity: clamp(o.pulseDensity, 0, 1), cableCount: clamp(Math.round(o.cableCount), 4, 200),
+      thickness: clamp(o.thickness, 0.05, 2), rimWidth: clamp(o.rimWidth, 0, 1), size: Math.max(0.05, o.size), glow: Math.max(0, o.glow),
+      fadeNear: Math.max(0.001, o.fadeNear), fadeFar: Math.max(0.01, o.fadeFar), brightness: Math.max(0, o.brightness), opacity: clamp(o.opacity, 0, 1)
+    });
+  }
+
+  window.createLightTunnel = function (container, options) {
+    let raw = Object.assign({}, DEFAULTS, options || {});
+    let s = normalize(raw);
+    const canvas = document.createElement('canvas');
+    canvas.setAttribute('aria-hidden', 'true');
+    container.appendChild(canvas);
+    const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false });
+    if (!gl) { canvas.remove(); return null; }
+    const program = link(gl); if (!program) { canvas.remove(); return null; }
+    const u = program.uniforms;
+    const buffer = gl.createBuffer(), vao = gl.createVertexArray();
+    gl.bindVertexArray(vao); gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+    const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+    const cache = new Map();
+    const parse = (value, fallback) => {
+      if (!value) return fallback; const key = String(value);
+      if (cache.has(key)) return cache.get(key);
+      let rgb = fallback;
+      if (probe) { probe.clearRect(0, 0, 1, 1); probe.fillStyle = '#000'; probe.fillStyle = key; probe.fillRect(0, 0, 1, 1);
+        const d = probe.getImageData(0, 0, 1, 1).data; rgb = [d[0] / 255, d[1] / 255, d[2] / 255]; }
+      cache.set(key, rgb); return rgb;
+    };
+
+    const reduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false;
+    const pointer = { x: 0, y: 0, inside: false }, steer = { x: 0, y: 0 }, surge = { age: 10 };
+    let time = 0, drift = 0, reveal = s.intro && !reduce ? 0 : 1, raf = 0, last = 0, visible = true;
+
+    const render = () => {
+      const width = canvas.width, height = canvas.height;
+      const ratio = width / Math.max(1, container.clientWidth);
+      const minSide = Math.min(width, height);
+      const flow = s.flow, span = 3.4, travel = surge.age * 2.6;
+      const surgeDepth = flow > 0 ? span - travel : -0.6 + travel;
+      const surgeLevel = surge.age < 2.4 ? Math.min(1, surge.age / 0.12) * Math.exp(-surge.age * 1.1) : 0;
+      const eased = reveal * reveal * (3 - 2 * reveal);
+      gl.viewport(0, 0, width, height); gl.useProgram(program.program); gl.bindVertexArray(vao);
+      gl.uniform2f(u.uResolution, width, height);
+      gl.uniform2f(u.uCenter, s.centerX * minSide, s.centerY * minSide);
+      gl.uniform1f(u.uScale, minSide * 0.5 * s.size);
+      gl.uniform1f(u.uRatio, ratio); gl.uniform1f(u.uTime, time); gl.uniform1f(u.uDrift, drift);
+      gl.uniform2f(u.uSteer, steer.x, steer.y); gl.uniform1f(u.uBend, s.bend * 0.45); gl.uniform1f(u.uCount, s.cableCount);
+      gl.uniform1f(u.uSwing, (Math.sin(drift * 0.9) * s.sway * 0.5) / (Math.PI * 2));
+      gl.uniform1f(u.uWave, s.waviness * 0.15); gl.uniform1f(u.uWidth, (0.25 + s.thickness * 1.5) * ratio);
+      gl.uniform1f(u.uPulseWidth, 0.6 + s.pulseWidth * 0.9);
+      const len = s.pulseLength * 1.2;
+      gl.uniform1f(u.uHead, len * (0.08 + s.pulseBlend * 0.22)); gl.uniform1f(u.uTail, len * (0.5 + s.pulseBlend * 0.7));
+      gl.uniform1f(u.uChance, s.pulseDensity); gl.uniform1f(u.uSpacing, 0.4); gl.uniform1f(u.uPulseSpeed, s.pulseSpeed * 4);
+      gl.uniform1f(u.uFlow, flow); gl.uniform1f(u.uHalo, 1.2 + s.rimWidth * 8); gl.uniform1f(u.uGlow, s.glow);
+      gl.uniform1f(u.uBrightness, s.brightness); gl.uniform1f(u.uVariance, s.colorVariance ? 1 : 0); gl.uniform1f(u.uBody, s.tunnelOpacity);
+      gl.uniform1f(u.uFadeNear, s.fadeNear); gl.uniform1f(u.uFadeFar, s.fadeFar);
+      gl.uniform3fv(u.uCable, parse(s.cableColor, [1, 1, 1])); gl.uniform3fv(u.uPulse, parse(s.pulseColor, [1, 1, 1]));
+      gl.uniform3fv(u.uTunnel, parse(s.tunnelColor, [1, 1, 1]));
+      gl.uniform3f(u.uSurge, surgeDepth, surgeLevel, 0.22); gl.uniform1f(u.uReveal, 1.7 - eased * 3.6);
+      gl.uniform1f(u.uGrain, s.grain ? s.grainIntensity : 0); gl.uniform1f(u.uSeed, s.variation);
+      gl.uniform1f(u.uLight, s.lightMode ? 1 : 0); gl.uniform1f(u.uOpacity, s.opacity);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    };
+
+    const frame = now => {
+      raf = 0; if (!visible || document.hidden) return;
+      const dt = last ? clamp((now - last) / 1000, 0.0005, 0.05) : 1 / 60; last = now;
+      const motion = reduce ? 0 : 1;
+      time += dt * s.speed * motion; drift += dt * (s.speed + 0.2) * motion; surge.age += dt;
+      if (s.intro && !reduce && reveal < 1) reveal = Math.min(1, reveal + dt / INTRO_SECONDS); else if (!s.intro || reduce) reveal = 1;
+      const engaged = s.mouseInteraction && pointer.inside && !reduce;
+      const reach = s.mouseStrength * 2.5;
+      const tx = engaged ? pointer.x * reach : 0, ty = engaged ? pointer.y * reach : 0;
+      const follow = 1 - Math.exp(-dt / 0.6);
+      steer.x += (tx - steer.x) * follow; steer.y += (ty - steer.y) * follow;
+      render();
+      const settled = Math.abs(tx - steer.x) < 0.0005 && Math.abs(ty - steer.y) < 0.0005;
+      if (motion > 0 || !settled || reveal < 1 || surge.age < 2.4) raf = requestAnimationFrame(frame); else last = 0;
+    };
+    const wake = () => { if (!raf && visible && !document.hidden) raf = requestAnimationFrame(frame); };
+    const resize = () => {
+      const w = Math.max(1, container.clientWidth), h = Math.max(1, container.clientHeight);
+      const r = Math.min(s.dpr || window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(1, Math.round(w * r)); canvas.height = Math.max(1, Math.round(h * r));
+      if (typeof options.onResize === 'function') options.onResize(api, w, h);
+      render(); wake();
+    };
+    const locate = e => {
+      const rect = container.getBoundingClientRect();
+      const x = e.clientX - rect.left, y = e.clientY - rect.top;
+      pointer.inside = x >= 0 && y >= 0 && x <= rect.width && y <= rect.height;
+      const scale = Math.min(rect.width, rect.height) * 0.5;
+      pointer.x = (x - rect.width / 2) / Math.max(1, scale); pointer.y = (rect.height / 2 - y) / Math.max(1, scale);
+    };
+    const onMove = e => { locate(e); wake(); };
+    const onDown = e => {
+      locate(e);
+      if (!pointer.inside || !s.clickSurge || reduce) return;
+      if (e.target.closest && e.target.closest('a, button, input, select, textarea')) return;
+      surge.age = 0; wake();
+    };
+    const onUp = e => { if (e.pointerType !== 'mouse') pointer.inside = false; };
+    const onLeave = () => { pointer.inside = false; };
+    const onVis = () => { last = 0; wake(); };
+
+    new ResizeObserver(resize).observe(container);
+    new IntersectionObserver(entries => { visible = entries.some(en => en.isIntersecting); if (visible) { last = 0; wake(); } }).observe(container);
+    window.addEventListener('pointermove', onMove, { passive: true });
+    window.addEventListener('pointerdown', onDown, { passive: true });
+    window.addEventListener('pointerup', onUp, { passive: true });
+    window.addEventListener('pointercancel', onUp, { passive: true });
+    document.documentElement.addEventListener('pointerleave', onLeave);
+    document.addEventListener('visibilitychange', onVis);
+
+    const api = {
+      set(next) { raw = Object.assign(raw, next); s = normalize(raw); if (!raf) render(); wake(); },
+      surge() { if (!reduce) { surge.age = 0; wake(); } }
+    };
+    resize();
+    return api;
+  };
+})();
+
+/* ===== Túnel do topo ===== */
+(function () {
+  const el = document.getElementById('tunel');
+  if (!el || !window.createLightTunnel) return;
+  const posicao = w => (w > 760 ? { centerX: 0.42, centerY: 0.05, size: 1.15 } : { centerX: 0, centerY: 0.32, size: 0.95 });
+  createLightTunnel(el, Object.assign({
+    cableColor: '#9DB2C6',
+    pulseColor: '#DCE8F3',
+    tunnelColor: '#2E5B80',
+    tunnelOpacity: 0.35,
+    cableCount: 64,
+    pulseDensity: 0.55,
+    flowDirection: 'inward',
+    speed: 0.12,
+    brightness: 1.15,
+    mouseInteraction: true,
+    clickSurge: true,
+    onResize(api, w) { api.set(posicao(w)); }
+  }, posicao(el.clientWidth)));
+})();
+
+/* ===== Menu móvel ===== */
+(function () {
+  const btn = document.getElementById('menu-btn'), nav = document.getElementById('nav');
+  btn.addEventListener('click', () => {
+    const aberto = nav.classList.toggle('aberto');
+    btn.setAttribute('aria-expanded', String(aberto));
+    btn.textContent = aberto ? 'Fechar' : 'Menu';
+  });
+  nav.addEventListener('click', e => {
+    if (e.target.closest('a')) { nav.classList.remove('aberto'); btn.setAttribute('aria-expanded', 'false'); btn.textContent = 'Menu'; }
+  });
+})();
+
+/* ===== Rastreamento (demonstração) ===== */
+(function () {
+  const pad = n => String(n).padStart(2, '0');
+  const dia = d => pad(d.getDate()) + '/' + pad(d.getMonth() + 1);
+  const hora = (d, h, m) => { const x = new Date(d); x.setHours(h, m, 0, 0); return x; };
+  const fmt = d => dia(d) + ' ' + pad(d.getHours()) + 'h' + pad(d.getMinutes());
+
+  function eventos(codigo) {
+    const hoje = new Date();
+    const ontem = new Date(hoje); ontem.setDate(hoje.getDate() - 1);
+    const anteontem = new Date(hoje); anteontem.setDate(hoje.getDate() - 2);
+    const n = parseInt(codigo.replace(/\D/g, '').slice(-2) || '0', 10);
+    const destinos = [['Curitiba', 'São José dos Pinhais'], ['Belo Horizonte', 'Contagem'], ['Rio de Janeiro', 'Duque de Caxias'], ['Porto Alegre', 'Canoas']];
+    const [cidade, cd] = destinos[n % destinos.length];
+    return {
+      cidade,
+      lista: [
+        [hora(anteontem, 8, 12), 'Coletado no remetente', 'Guarulhos, SP'],
+        [hora(anteontem, 14, 40), 'Triagem concluída', 'CD Guarulhos'],
+        [hora(anteontem, 22, 5), 'Em transferência', 'Rumo ao CD ' + cd],
+        [hora(ontem, 6, 30), 'Recebido no centro de distribuição', 'CD ' + cd],
+        [hora(hoje, 7, 45), 'Saiu para entrega', cidade]
+      ],
+      previsao: 'Previsão de entrega: hoje, ' + dia(hoje) + ', até 18h'
+    };
+  }
+
+  function mostrar(codigo) {
+    const dados = eventos(codigo);
+    document.getElementById('r-codigo').textContent = codigo;
+    document.getElementById('r-status').textContent = 'Em rota de entrega';
+    document.getElementById('r-previsao').textContent = dados.previsao;
+    const ol = document.getElementById('r-eventos');
+    ol.innerHTML = '';
+    dados.lista.slice().reverse().forEach((ev, i) => {
+      const li = document.createElement('li');
+      if (i === 0) li.className = 'atual';
+      const t = document.createElement('time'); t.textContent = fmt(ev[0]);
+      const p = document.createElement('span'); p.className = 'ponto';
+      const d = document.createElement('div'); d.className = 'ev'; d.textContent = ev[1];
+      const sm = document.createElement('small'); sm.textContent = ev[2]; d.appendChild(sm);
+      li.style.setProperty('--i', i);
+      li.append(t, p, d); ol.appendChild(li);
+    });
+  }
+
+  window.reanimarLinha = () => {
+    const ol = document.getElementById('r-eventos');
+    ol.classList.remove('anima'); void ol.offsetWidth; ol.classList.add('anima');
+  };
+
+  const form = document.getElementById('form-rastreio');
+  const input = document.getElementById('codigo');
+  const msg = document.getElementById('msg-rastreio');
+  input.addEventListener('input', () => {
+    const limpo = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 11);
+    const partes = [limpo.slice(0, 3), limpo.slice(3, 7), limpo.slice(7, 11)].filter(Boolean);
+    input.value = partes.join(' ');
+    input.removeAttribute('aria-invalid'); msg.textContent = '';
+  });
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const v = input.value.trim().toUpperCase();
+    if (!/^[A-Z]{3} \d{4} \d{4}$/.test(v)) {
+      input.setAttribute('aria-invalid', 'true');
+      msg.textContent = 'Código incompleto. Use três letras e oito números, como CRD 4821 0937.';
+      input.focus(); return;
+    }
+    mostrar(v);
+    window.reanimarLinha();
+    document.getElementById('r-exemplo').textContent = 'Resultado de demonstração';
+  });
+  mostrar('CRD 4821 0937');
+})();
+
+/* ===== Cotação ===== */
+(function () {
+  const form = document.getElementById('form-cotacao');
+  const conf = document.getElementById('confirmacao');
+  const regras = {
+    nome: [v => v.trim().length >= 2, 'Informe seu nome.'],
+    email: [v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()), 'Informe um e-mail válido, como nome@empresa.com.br.'],
+    origem: [v => v.trim().length >= 2, 'Informe a cidade ou o CEP de origem.'],
+    destino: [v => v.trim().length >= 2, 'Informe a cidade ou o CEP de destino.']
+  };
+  form.addEventListener('input', e => {
+    const campo = e.target; if (!campo.name || !regras[campo.name]) return;
+    if (regras[campo.name][0](campo.value)) { campo.removeAttribute('aria-invalid'); document.getElementById('e-' + campo.name).textContent = ''; }
+  });
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    let primeiro = null;
+    Object.keys(regras).forEach(nome => {
+      const campo = form.elements[nome], ok = regras[nome][0](campo.value);
+      const span = document.getElementById('e-' + nome);
+      campo.setAttribute('aria-invalid', ok ? 'false' : 'true');
+      campo.setAttribute('aria-describedby', 'e-' + nome);
+      span.textContent = ok ? '' : regras[nome][1];
+      if (!ok && !primeiro) primeiro = campo;
+    });
+    if (primeiro) { conf.hidden = true; primeiro.focus(); return; }
+    const f = form.elements;
+    document.getElementById('conf-texto').textContent =
+      f.servico.value + ' de ' + f.origem.value.trim() + ' para ' + f.destino.value.trim() +
+      '. O envio deste formulário ainda não está ligado a um e-mail ou sistema; configure o destino antes de publicar o site.';
+    conf.hidden = false; conf.focus();
+  });
+})();
+
+/* ===== Transições por seção ===== */
+(function () {
+  const reduz = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const grupos = [
+    ['.titulo-secao', 'rv rv--titulo'],
+    ['main .lead', 'rv'],
+    ['.servico', 'rv'],
+    ['.etapa', 'rv rv--pop'],
+    ['.numeros > div', 'rv rv--pop'],
+    ['.tabela-cx tbody tr', 'rv'],
+    ['.mapa', 'rv rv--dir'],
+    ['.rastreio .grade > div:first-child', 'rv rv--esq'],
+    ['.painel', 'rv rv--dir'],
+    ['.canais > div', 'rv'],
+    ['.form-cotacao > .campo, .form-cotacao > .form-rodape', 'rv'],
+    ['.rodape .grade > div', 'rv'],
+    ['.etapas, .numeros', 'rv-sinal']
+  ];
+  const alvos = [];
+  grupos.forEach(([sel, cls]) => {
+    const cont = new Map();
+    document.querySelectorAll(sel).forEach(el => {
+      cls.split(' ').forEach(c => el.classList.add(c));
+      const n = cont.get(el.parentNode) || 0; cont.set(el.parentNode, n + 1);
+      el.style.setProperty('--i', n);
+      if (!alvos.includes(el)) alvos.push(el);
+    });
+  });
+
+  const contar = bloco => {
+    bloco.querySelectorAll('dt[data-alvo]').forEach(dt => {
+      const alvo = parseFloat(dt.dataset.alvo), dec = +(dt.dataset.dec || 0), suf = dt.dataset.suf || '';
+      const t0 = performance.now(), dur = 1800;
+      const passo = agora => {
+        const k = Math.min(1, (agora - t0) / dur), e = 1 - Math.pow(1 - k, 4);
+        dt.textContent = (alvo * e).toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec }) + suf;
+        if (k < 1) requestAnimationFrame(passo);
+      };
+      requestAnimationFrame(passo);
+    });
+  };
+  const disparar = el => {
+    el.classList.add('visto');
+    if (el.matches('.numeros')) contar(el);
+    if (el.matches('.painel')) window.reanimarLinha();
+  };
+
+  if (reduz || !('IntersectionObserver' in window)) { alvos.forEach(el => el.classList.add('visto')); return; }
+  const vh = window.innerHeight;
+  alvos.forEach(el => { if (el.getBoundingClientRect().top < vh * 0.9) el.classList.add('visto'); });
+  document.documentElement.classList.add('anim');
+  /* títulos ficam recortados enquanto escondidos, então observamos o bloco que os contém */
+  const sentinelas = new Map();
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (!en.isIntersecting) return;
+      (sentinelas.get(en.target) || []).forEach(disparar);
+      io.unobserve(en.target);
+    });
+  }, { rootMargin: '0px 0px -10% 0px', threshold: 0 });
+  alvos.forEach(el => {
+    if (el.classList.contains('visto')) return;
+    const s = el.classList.contains('rv--titulo') ? el.parentElement : el;
+    if (!sentinelas.has(s)) { sentinelas.set(s, []); io.observe(s); }
+    sentinelas.get(s).push(el);
+  });
+
+  /* onda de luz ao clicar nos botões */
+  document.addEventListener('pointerdown', e => {
+    const b = e.target.closest && e.target.closest('.btn');
+    if (!b) return;
+    const r = b.getBoundingClientRect(), s = Math.max(r.width, r.height) * 2.2;
+    const o = document.createElement('span');
+    o.className = 'onda';
+    o.style.width = o.style.height = s + 'px';
+    o.style.left = (e.clientX - r.left - s / 2) + 'px';
+    o.style.top = (e.clientY - r.top - s / 2) + 'px';
+    b.appendChild(o);
+    o.addEventListener('animationend', () => o.remove());
+  });
+})();
+
+/* ===== Faixa animada entre o início e os serviços ===== */
+(function () {
+  const caixa = document.querySelector('.ponte'), cv = document.getElementById('ponte-canvas');
+  if (!caixa || !cv) return;
+  const ctx = cv.getContext('2d'); if (!ctx) return;
+  const reduz = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const hex = h => { h = (h || '').replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); const n = parseInt(h, 16) || 0; return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  const rgba = (c, a) => 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')';
+  const mistura = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+  const ease = u => u * u * (3 - 2 * u);
+  let cores = {};
+  const lerCores = () => {
+    const cs = getComputedStyle(document.documentElement);
+    cores = { aco: hex(cs.getPropertyValue('--aco').trim() || '#9DB2C6'), azul: hex(cs.getPropertyValue('--azul-metal').trim() || '#2E5B80'), claro: hex('#E2ECF5') };
+  };
+
+  const N = 16;
+  const novoPulso = () => ({ s: -Math.random() * 0.5, v: 0.07 + Math.random() * 0.12, len: 0.07 + Math.random() * 0.09 });
+  const linhas = Array.from({ length: N }, (_, i) => ({
+    t: (i + 0.5) / N, fase: Math.random() * 6.283,
+    pulsos: Array.from({ length: i % 3 === 0 ? 2 : 1 }, () => { const p = novoPulso(); p.s = Math.random() * 1.2 - 0.1; return p; })
+  }));
+  let W = 0, H = 0, dpr = 1, tempo = 0, ultimo = 0, raf = 0, visivel = false, progresso = 0, impulso = 0, ultimoScroll = window.scrollY;
+
+  /* as fibras saem agrupadas da esquerda (como do túnel) e se abrem em faixas; ao rolar, elas se alinham */
+  const yEm = (L, u) => {
+    const leque = 0.14 + 0.86 * ease(u);
+    const abertura = leque + (1 - leque) * progresso * 0.55;
+    const base = H * 0.62 + (L.t - 0.5) * H * 0.58 * abertura;
+    const amp = H * 0.055 * (1 - 0.7 * progresso) * (0.3 + 0.7 * u);
+    return base + amp * Math.sin(u * 5.4 + tempo * 0.75 + L.fase);
+  };
+
+  const desenhar = () => {
+    if (!W || !H) return;
+    ctx.clearRect(0, 0, W, H);
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, rgba(cores.aco, 0.6)); g.addColorStop(1, rgba(cores.azul, 0.5));
+    ctx.lineWidth = 1.1 * dpr; ctx.strokeStyle = g; ctx.lineCap = 'round';
+    const passo = 10 * dpr;
+    linhas.forEach(L => {
+      ctx.beginPath();
+      for (let x = 0; x <= W + passo; x += passo) { const y = yEm(L, x / W); x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+      ctx.stroke();
+    });
+    linhas.forEach(L => {
+      const c = mistura(cores.claro, cores.azul, ease(L.t));
+      L.pulsos.forEach(P => {
+        const ini = Math.max(0, P.s - P.len), fim = Math.min(1, P.s);
+        if (fim <= ini) return;
+        const x0 = ini * W, x1 = fim * W;
+        const gr = ctx.createLinearGradient(x0, 0, x1, 0);
+        gr.addColorStop(0, rgba(c, 0)); gr.addColorStop(1, rgba(c, 0.95));
+        ctx.strokeStyle = gr; ctx.lineWidth = 2.4 * dpr;
+        ctx.beginPath();
+        for (let j = 0; j <= 16; j++) { const u = ini + (fim - ini) * j / 16, x = u * W, y = yEm(L, u); j ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+        ctx.stroke();
+        if (P.s <= 1) {
+          ctx.fillStyle = rgba(c, 0.95); ctx.shadowColor = rgba(c, 0.9); ctx.shadowBlur = 12 * dpr;
+          ctx.beginPath(); ctx.arc(x1, yEm(L, fim), 2.4 * dpr, 0, 6.283); ctx.fill(); ctx.shadowBlur = 0;
+        }
+      });
+    });
+  };
+
+  const quadro = agora => {
+    raf = 0; if (!visivel || document.hidden) return;
+    const dt = ultimo ? Math.min((agora - ultimo) / 1000, 0.05) : 1 / 60; ultimo = agora;
+    tempo += dt; impulso *= Math.exp(-dt * 2.2);
+    linhas.forEach(L => L.pulsos.forEach(P => {
+      P.s += dt * P.v * (1 + impulso * 5 + progresso * 0.8);
+      if (P.s - P.len > 1) Object.assign(P, novoPulso());
+    }));
+    desenhar();
+    raf = requestAnimationFrame(quadro);
+  };
+  const medir = () => {
+    const r = caixa.getBoundingClientRect();
+    progresso = Math.min(1, Math.max(0, (window.innerHeight - r.top) / (window.innerHeight + r.height)));
+  };
+  const tamanho = () => {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.width = Math.max(1, Math.round(caixa.clientWidth * dpr));
+    H = cv.height = Math.max(1, Math.round(caixa.clientHeight * dpr));
+    medir(); desenhar();
+  };
+  window.addEventListener('scroll', () => {
+    const d = Math.abs(window.scrollY - ultimoScroll); ultimoScroll = window.scrollY;
+    impulso = Math.min(1.6, impulso + d * 0.004); medir();
+    if (reduz) desenhar();
+  }, { passive: true });
+  lerCores();
+  new ResizeObserver(tamanho).observe(caixa);
+  if (!reduz) {
+    new IntersectionObserver(es => {
+      visivel = es.some(e => e.isIntersecting);
+      if (visivel && !raf) { ultimo = 0; raf = requestAnimationFrame(quadro); }
+    }).observe(caixa);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && visivel && !raf) { ultimo = 0; raf = requestAnimationFrame(quadro); } });
+  }
+  const atualizarTema = () => { lerCores(); desenhar(); };
+  const mq = window.matchMedia && matchMedia('(prefers-color-scheme: dark)');
+  if (mq && mq.addEventListener) mq.addEventListener('change', atualizarTema);
+  new MutationObserver(atualizarTema).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+})();
+
+/* ===== Ondas fluidas entre as demais seções ===== */
+(function () {
+  const divs = document.querySelectorAll('.onda-div');
+  if (!divs.length) return;
+  const reduz = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const raiz = document.documentElement;
+  const hex = h => { h = (h || '').replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); const n = parseInt(h, 16) || 0; return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  const tok = n => hex(getComputedStyle(raiz).getPropertyValue(n).trim());
+  const rgba = (c, a) => 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')';
+  const mistura = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+  let agito = 0, ultimoScroll = window.scrollY;
+
+  const ondas = [...divs].map((el, idx) => {
+    const cv = el.querySelector('canvas'), ctx = cv.getContext('2d');
+    const o = { el, cv, ctx, idx, W: 0, H: 0, dpr: 1, t: idx * 2.3, cor: null, raf: 0, vis: false, ult: 0 };
+    o.ler = () => { o.cor = { de: tok(el.dataset.de), para: tok(el.dataset.para), azul: tok('--azul-metal'), aco: tok('--aco') }; };
+    o.desenhar = () => {
+      const { ctx, W, H, cor, t } = o;
+      if (!W || !H || !ctx) return;
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = rgba(cor.de, 1); ctx.fillRect(0, 0, W, H);
+      const camadas = [
+        { y: .34, a: .15, f: 1.1, s: .45, c: mistura(cor.azul, cor.aco, .35), al: .3 },
+        { y: .50, a: .13, f: 1.6, s: -.55, c: mistura(cor.azul, cor.para, .25), al: .5 },
+        { y: .64, a: .11, f: 1.3, s: .7, c: cor.para, al: 1 }
+      ];
+      const passo = 8 * o.dpr;
+      camadas.forEach((L, k) => {
+        const amp = H * L.a * (1 + agito * 0.9);
+        const yEm = x => {
+          const u = x / W;
+          return H * L.y
+            + amp * Math.sin(u * Math.PI * 2 * L.f + t * L.s + k * 1.7 + o.idx)
+            + amp * 0.45 * Math.sin(u * Math.PI * 2 * L.f * 2.2 - t * L.s * 1.3 + k);
+        };
+        ctx.beginPath(); ctx.moveTo(0, H);
+        for (let x = 0; x <= W + passo; x += passo) ctx.lineTo(x, yEm(x));
+        ctx.lineTo(W, H); ctx.closePath();
+        ctx.fillStyle = rgba(L.c, L.al); ctx.fill();
+        if (k === 2) {
+          /* crista com reflexo metálico que desliza */
+          const p = 0.15 + ((t * 0.06) % 1) * 0.7;
+          const g = ctx.createLinearGradient(0, 0, W, 0);
+          g.addColorStop(0, rgba(cor.aco, .55));
+          g.addColorStop(Math.max(0, p - .14), rgba(cor.aco, .7));
+          g.addColorStop(p, 'rgba(255,255,255,.95)');
+          g.addColorStop(Math.min(1, p + .14), rgba(cor.azul, .85));
+          g.addColorStop(1, rgba(cor.azul, .6));
+          ctx.beginPath();
+          for (let x = 0; x <= W + passo; x += passo) { const y = yEm(x); x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+          ctx.strokeStyle = g; ctx.lineWidth = 2.6 * o.dpr; ctx.stroke();
+        }
+      });
+    };
+    o.quadro = agora => {
+      o.raf = 0; if (!o.vis || document.hidden) return;
+      const dt = o.ult ? Math.min((agora - o.ult) / 1000, 0.05) : 1 / 60; o.ult = agora;
+      o.t += dt * (1 + agito * 2.5);
+      o.desenhar();
+      o.raf = requestAnimationFrame(o.quadro);
+    };
+    o.tamanho = () => {
+      o.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      o.W = cv.width = Math.max(1, Math.round(el.clientWidth * o.dpr));
+      o.H = cv.height = Math.max(1, Math.round(el.clientHeight * o.dpr));
+      o.desenhar();
+    };
+    o.ler();
+    new ResizeObserver(o.tamanho).observe(el);
+    if (!reduz) new IntersectionObserver(es => {
+      o.vis = es.some(e => e.isIntersecting);
+      if (o.vis && !o.raf) { o.ult = 0; o.raf = requestAnimationFrame(o.quadro); }
+    }).observe(el);
+    return o;
+  });
+
+  window.addEventListener('scroll', () => {
+    const d = Math.abs(window.scrollY - ultimoScroll); ultimoScroll = window.scrollY;
+    agito = Math.min(1, agito + d * 0.003);
+  }, { passive: true });
+  if (!reduz) (function acalmar() { agito *= 0.96; requestAnimationFrame(acalmar); })();
+  document.addEventListener('visibilitychange', () => ondas.forEach(o => { if (!document.hidden && o.vis && !o.raf) { o.ult = 0; o.raf = requestAnimationFrame(o.quadro); } }));
+  const atualizar = () => ondas.forEach(o => { o.ler(); o.desenhar(); });
+  const mq = window.matchMedia && matchMedia('(prefers-color-scheme: dark)');
+  if (mq && mq.addEventListener) mq.addEventListener('change', atualizar);
+  new MutationObserver(atualizar).observe(raiz, { attributes: true, attributeFilter: ['data-theme'] });
+})();
+
+document.getElementById('ano').textContent = new Date().getFullYear();
+</script>
+
+</html>

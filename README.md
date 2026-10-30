@@ -1,4 +1,10 @@
-# Corredor Logística — site
+# Corredor Logística
+
+**Site conceitual.** A empresa é fictícia e foi criada para demonstrar o projeto.
+
+Veja no ar: https://alvesj03.github.io/empresa-de-logistica-site/
+
+![Prévia do site](preview.png)
 
 Site de uma página para uma empresa de logística, feito em HTML, CSS e JavaScript puros (sem dependências nem etapa de build).
 
@@ -15,9 +21,9 @@ Entre as seções há transições animadas, e o conteúdo de cada uma aparece a
 
 ## Como abrir
 
-Abra o `index.html` no navegador. Para publicar, ative o GitHub Pages em **Settings → Pages**, com a branch `main` e a pasta raiz.
+Abra o `index.html` no navegador. O site é publicado pelo GitHub Pages a partir da branch `main`.
 
-## Antes de publicar
+## Para usar com uma empresa real
 
 - Troque o nome, o telefone, o e-mail, o endereço e os números pelos dados reais da empresa.
 - Ligue o formulário de cotação a um e-mail ou sistema. Hoje ele só valida os campos e mostra um resumo.

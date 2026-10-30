@@ -6,6 +6,17 @@
 <title>Corredor Logística</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Transporte rodoviário, armazenagem e distribuição no Sul e Sudeste.">
+<meta name="theme-color" content="#0B1622">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="Corredor Logística">
+<meta property="og:description" content="Transporte rodoviário, armazenagem e distribuição no Sul e Sudeste. Site conceitual.">
+<meta property="og:url" content="https://alvesj03.github.io/empresa-de-logistica-site/">
+<meta property="og:image" content="https://alvesj03.github.io/empresa-de-logistica-site/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%230B1622'/%3E%3Ccircle cx='20' cy='20' r='14' fill='none' stroke='%239DB2C6' stroke-width='2.5'/%3E%3Ccircle cx='21.5' cy='19.5' r='8' fill='none' stroke='%239DB2C6' stroke-width='2.2'/%3E%3Ccircle cx='22.5' cy='19' r='2.4' fill='%23fff'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap">
@@ -655,7 +666,7 @@ html.anim .mapa:not(.visto) text { opacity: 0; }
       <div><h4>Empresa</h4><ul><li><a href="#como-funciona">Como funciona</a></li><li><a href="#cobertura">Cobertura</a></li><li><a href="#rastreamento">Rastreamento</a></li></ul></div>
       <div><h4>Contato</h4><ul><li>(11) 4000-0000</li><li>comercial@corredorlogistica.com.br</li><li>Guarulhos, SP</li></ul></div>
     </div>
-    <div class="final"><span>© <span id="ano">2026</span> Corredor Logística</span><span>Todos os direitos reservados</span></div>
+    <div class="final"><span>© <span id="ano">2026</span> Corredor Logística</span><span>Site conceitual</span></div>
   </div>
 </footer>
 
@@ -919,13 +930,15 @@ void main() {
 (function () {
   const el = document.getElementById('tunel');
   if (!el || !window.createLightTunnel) return;
-  const posicao = w => (w > 760 ? { centerX: 0.42, centerY: 0.05, size: 1.15 } : { centerX: 0, centerY: 0.32, size: 0.95 });
+  /* no celular o túnel usa menos fibras e menos pixels, para rodar leve em aparelhos simples */
+  const posicao = w => (w > 760
+    ? { centerX: 0.42, centerY: 0.05, size: 1.15, cableCount: 64, dpr: 1.5 }
+    : { centerX: 0, centerY: 0.32, size: 0.95, cableCount: 40, dpr: 1 });
   createLightTunnel(el, Object.assign({
     cableColor: '#9DB2C6',
     pulseColor: '#DCE8F3',
     tunnelColor: '#2E5B80',
     tunnelOpacity: 0.35,
-    cableCount: 64,
     pulseDensity: 0.55,
     flowDirection: 'inward',
     speed: 0.12,
